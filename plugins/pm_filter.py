@@ -11,13 +11,13 @@ BUTTONS = {}
 
 @Client.on_message(filters.private & filters.text & filters.incoming & ~filters.regex(r"^/"))
 async def pm_search(client, message):
-    """Handles movie/file search in PM instantly without intermediate searching status"""
+    """Handles movie/file search in PM instantly putting only total files in blockquote"""
     if message.from_user.id not in ADMINS:
         return  # Bot remains completely silent for non-admins
 
     search = message.text.strip()
     
-    # Fetch results directly from MongoDB first to eliminate intermediate message latency
+    # Direct database fetch to eliminate intermediate message latency
     files, offset, total_results = await get_search_results(search)
     if not files:
         await message.reply(script.NOT_FILE_TXT.format(message.from_user.mention, search), quote=True)
@@ -41,9 +41,9 @@ async def pm_search(client, message):
     
     btn.append([InlineKeyboardButton("🙅 Close", callback_data=f"close#{req}")])
     
-    caption = f"<b>✅ Search Results:- {search}\n🎬 Total {total_results} files found 👇</b>{files_link}"
+    # --- 🟢 ONLY TOTAL FILES ENCLOSED INSIDE Telegram BLOCKQUOTE ---
+    caption = f"<blockquote>🎬 <b>Total {total_results} Files found</b> </blockquote>{files_link}"
     
-    # Direct reply to ensure lightning fast loading speed
     await message.reply(
         text=caption, 
         reply_markup=InlineKeyboardMarkup(btn), 
@@ -55,7 +55,7 @@ async def pm_search(client, message):
 
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
-    """Handles pagination for Next and Back pages (Text Mode Results)"""
+    """Handles pagination for Next and Back pages with minimal blockquote layout"""
     ident, req, key, offset = query.data.split("_")
     if int(req) != query.from_user.id:
         return await query.answer("This is not for you! ❌", show_alert=True)
@@ -86,7 +86,9 @@ async def next_page(bot, query):
         
     btn = [p_buttons, [InlineKeyboardButton("🙅 Close", callback_data=f"close#{req}")]]
     
-    caption = f"<b>✅ Search Results:- {search}\n🎬 Total {total} files found 👇</b>{files_link}"
+    # --- 🟢 ONLY TOTAL FILES ENCLOSED INSIDE BLOCKQUOTE FOR PAGINATION ---
+    caption = f"<blockquote>🎬 <b>Total {total} Files found</b> </blockquote>{files_link}"
+    
     await query.message.edit_text(
         text=caption, 
         reply_markup=InlineKeyboardMarkup(btn), 
@@ -101,12 +103,10 @@ async def cb_handler(client: Client, query: CallbackQuery):
     data = query.data
     user_id = query.from_user.id
 
-    # On-the-fly streaming converter
     if data.startswith("stream"):
         file_id = data.split('#', 1)[1]
         await query.answer("Generating streaming links... ⏱️")
         
-        # Forward file to BIN_CHANNEL to fetch fresh integer message ID
         msg = await client.send_cached_media(chat_id=BIN_CHANNEL, file_id=file_id)
         
         watch = f"{URL}watch/{msg.id}"
@@ -120,7 +120,6 @@ async def cb_handler(client: Client, query: CallbackQuery):
         ]]
         await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
 
-    # Handled 'close_data' explicitly first to avoid string unpacking value errors
     elif data == "close_data":
         await query.message.delete()
 
