@@ -1,41 +1,39 @@
 class script(object):
 
-    START_TXT = """<b>हे {}, <i>{}</i>
+    START_TXT = """<b>Hey {}, <i>{}</i>
 
-मैं तुम्हारा पर्सनल ऑटो फ़िल्टर बॉट हूँ। मूवी या फ़ाइल का नाम भेजो और तुरंत डायरेक्ट लिंक पाओ... ⚡️</b>"""
+I am your personal auto filter bot. Send me the movie or file name to get direct links instantly... ⚡️</b>"""
 
-    STATUS_TXT = """🗃️ <b>डेटाबेस स्थिति (Bot Stats):</b>
+    STATUS_TXT = """🗃️ <b>Database Status (Bot Stats):</b>
 
-📂 कुल फ़ाइलें: <code>{}</code>
-🦹 कुल एडमिंस: <code>{}</code>
-🚀 इस्तेमाल की गई स्टोरेज: <code>{}</code>
-🗂️ फ्री स्टोरेज: <code>{}</code>
-⏰ अपटाइम: <code>{}</code>"""
+📂 Total Files: <code>{}</code>
+🦹 Total Admins: <code>{}</code>
+🚀 Used Storage: <code>{}</code>
+🗂️ Free Storage: <code>{}</code>
+⏰ Uptime: <code>{}</code>"""
 
-    NOT_FILE_TXT = """👋 <b>हे {},
+    NOT_FILE_TXT = """👋 <b>Hey {},
 
-दिए गए कीवर्ड <code>{}</code> के नाम से डेटाबेस में कोई फ़ाइल नहीं मिली! 🥲
+No file found in the database with the keyword <code>{}</code>! 🥲
 
-👉 कृपया स्पेलिंग जांचें या सही नाम लिखकर दोबारा सर्च करें।</b>"""
+👉 Please check the spelling or search again with the correct name.</b>"""
 
-    FILE_CAPTION = """<b>📂 {file_name}</b>\n\n<b>♻️ साइज: {file_size}</b>"""
+    # Only bold file name as requested
+    FILE_CAPTION = """<b>{file_name}</b>"""
 
-    HELP_TXT = """<b>नोट - कमांड्स की सही जानकारी के लिए नीचे दिए गए बटन पर क्लिक करें। ⚙️</b>"""
+    HELP_TXT = """<b>Note - Click the button below for correct information about the commands. ⚙️</b>"""
 
-    ADMIN_COMMAND_TXT = """<b>🤖 एडमिन कमांड्स की लिस्ट (Admin Commands):</b>
+    ADMIN_COMMAND_TXT = """<b>🤖 Admin Commands List:</b>
 
-🔹 /index_channels - इंडेक्स किए गए चैनल्स चेक करें
-🔹 /stats - बॉट और डेटाबेस का लाइव स्टेटस देखें
-🔹 /delete - क्वेरी का उपयोग करके फ़ाइलें डिलीट करें
-🔹 /delete_all - डेटाबेस की सभी इंडेक्स फाइलें डिलीट करें
-🔹 /restart - बॉट को रीस्टार्ट करें
-🔹 /set_pm_search - पीएम सर्च ऑन/off करें (on/off)
-🔹 /set_fsub - फोर्स सब चैनल सेट करें
-🔹 /remove_fsub - फोर्स सब चैनल हटाएँ"""
+🔹 /index_channels - Check indexed channels
+🔹 /stats - View live status of bot and database
+🔹 /delete - Delete files using a specific query
+🔹 /delete_all - Delete all indexed files from database
+🔹 /restart - Restart the bot
+🔹 /set_pm_search - Turn PM search on or off (on/off)"""
 
-    USER_COMMAND_TXT = """<b>🛠️ कॉन्फ़िगरेशन कमांड्स (Configuration Commands):</b>
+    USER_COMMAND_TXT = """<b>🛠️ Configuration Commands:</b>
 
-🔹 /start - बॉट का लाइव स्टेटस चेक करें
-🔹 /set_caption - कस्टम फ़ाइल कैप्शन सेट करें
-🔹 /id - अपनी यूज़र आईडी या रिप्लाई किए गए मैसेज की आईडी देखें
-🔹 /catbox - किसी फोटो/वीडियो को कैटबॉक्स लिंक में बदलें"""
+🔹 /start - Check live status of the bot
+🔹 /set_caption - Set a custom file caption
+🔹 /id - View your user ID or the ID of a replied message"""
