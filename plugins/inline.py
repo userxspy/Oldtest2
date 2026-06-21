@@ -1,5 +1,4 @@
 from hydrogram import Client
-from hydrogram.enums import emoji # <- hydrogram के अनुसार सही इम्पोर्ट पाथ
 from hydrogram.types import InlineQueryResultCachedDocument, InlineQuery
 from database.ia_filterdb import get_search_results
 from utils import get_size
@@ -43,7 +42,8 @@ async def inline_search(bot, query):
         )
 
     if results:
-        switch_pm_text = f"{emoji.FILE_FOLDER} कुल रिजल्ट्स - {total}"
+        # यहाँ हमने डायरेक्ट 📂 इमोजी स्ट्रिंग लगा दी है, अब कोई लाइब्रेरी एरर नहीं आ सकता
+        switch_pm_text = f"📂 कुल रिजल्ट्स - {total}"
         if string:
             switch_pm_text += f' (कीवर्ड: {string})'
         
@@ -56,7 +56,8 @@ async def inline_search(bot, query):
             next_offset=str(next_offset)
         )
     else:
-        switch_pm_text = f'{emoji.CROSS_MARK} कोई रिजल्ट नहीं मिला!'
+        # यहाँ डायरेक्ट ❌ इमोजी स्ट्रिंग लगा दी है
+        switch_pm_text = f'❌ कोई रिजल्ट नहीं मिला!'
         if string:
             switch_pm_text += f' (कीवर्ड: {string})'
             
