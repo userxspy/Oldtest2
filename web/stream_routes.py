@@ -1,3 +1,4 @@
+import os
 import math
 import secrets
 import mimetypes
@@ -10,12 +11,15 @@ from web.utils.render_template import media_watch
 
 routes = web.RouteTableDef()
 
-# --- 1. style.css का स्टेटिक रूट फिक्स ---
-# यह 'static' फोल्डर को वेब सर्वर पर मैप करेगा ताकि सीएसएस और इमेजेस प्लेयर में सही से लोड हों
-try:
-    routes.static('/static', './web/static')
-except Exception:
-    pass
+# --- ⚙️ ऑटो फोल्डर क्रिएशन फिक्स (कोयाब स्पेशल) ---
+# अगर कोयाब पर 'web/static' फोल्डर मिसिंग है, तो यह लाइन उसे रूट मैपिंग से पहले ही बना देगी ताकि aiohttp कभी क्रैश न हो
+STATIC_DIR = './web/static'
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR, exist_ok=True)
+
+# अब स्टेटिक रूट बिना किसी ValueError के 100% सुरक्षित रजिस्टर होगा
+routes.static('/static', STATIC_DIR)
+
 
 @routes.get("/", allow_head=True)
 async def root_route_handler(request):
@@ -25,7 +29,7 @@ async def root_route_handler(request):
 
 @routes.get("/watch/{message_id}")
 async def watch_handler(request):
-    """ऑनलाइन वीडियो प्लेयर (Watch Engine) रूट"""
+    """オンライン视频播放器 (Watch Engine) 路由"""
     try:
         message_id = int(request.match_info['message_id'])
         return web.Response(text=await media_watch(message_id), content_type='text/html')
@@ -46,7 +50,7 @@ async def download_handler(request):
         
 
 async def media_download(request, message_id: int):
-    """टेलीग्राम से वीएलसी/एमएक्स प्लेयर में हाई-स्पीड डाटा चंक्स स्ट्रीम और डाउनलोड करने का कोर लॉजिक"""
+    """टेलीग्राम से वीएलसी/एमएक्स प्लेयर में हाई-स्पीड डेटा चंक्स स्ट्रीम और डाउनलोड करने का कोर लॉजिक"""
     range_header = request.headers.get('Range', 0)
     media_msg = await temp.BOT.get_messages(BIN_CHANNEL, message_id)
     file_properties = await TGCustomYield().generate_file_properties(media_msg)
@@ -72,8 +76,7 @@ async def media_download(request, message_id: int):
     file_name = file_properties.file_name if file_properties.file_name else f"{secrets.token_hex(2)}.mp4"
     mime_type = file_properties.mime_type if file_properties.mime_type else mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
 
-    # --- 2. % सिंबल और स्पेशल कैरेक्टर्स क्रैश फिक्स ---
-    # urllib.parse.quote का उपयोग करके यूआरएल-सेफ नाम बनाएं और RFC 5987 स्टैंडर्ड हेडर लागू करें
+    # --- % सिंबल और स्पेशल कैरेक्टर्स क्रैश फिक्स ---
     safe_file_name = quote(file_name)
 
     headers = {
