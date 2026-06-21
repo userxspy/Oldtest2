@@ -1,7 +1,7 @@
 import os
+import time
 import random
 import asyncio
-from time import time as time_now
 import requests
 from hydrogram import Client, filters, enums
 from hydrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -37,7 +37,7 @@ async def start(client, message):
 
     mc = message.command[1] if len(message.command) == 2 else None
 
-    # यदि एडमिन सीधे किसी फाइल लिंक या ऑल फाइल्स (All Files) पर क्लिक करके आता है
+    # यदि एडमिन सीधे किसी फाइल लिंक (Text Mode Link) पर क्लिक करके आता है
     if mc:
         if mc.startswith("file") or mc.startswith("all"):
             try:
@@ -53,13 +53,20 @@ async def start(client, message):
             file = file_details[0]
             cap = script.FILE_CAPTION.format(file_name=file.file_name, file_size=get_size(file.file_size))
             
-            # डायरेक्ट वाच और डाउनलोड बटन (No Verification/No Ads)
+            # --- 🟢 पुराना क्लासिक बटन सेटअप ---
+            # सीधे प्लेयर लिंक देने के बजाय '🚀 Watch And Download ⚡' का कन्वर्टर बटन दें
             btn = [[
-                InlineKeyboardButton("⚡ Watch Online", url=f"{URL}watch/{file.file_id}"),
-                InlineKeyboardButton("🚀 Fast Download", url=f"{URL}download/{file.file_id}")
-            ]] if BIN_CHANNEL else []
+                InlineKeyboardButton("🚀 Watch And Download ⚡", callback_data=f"stream#{file.file_id}")
+            ], [
+                InlineKeyboardButton('🙅 क्लोज़', callback_data='close_data')
+            ]]
             
-            await client.send_cached_media(chat_id=message.from_user.id, file_id=file.file_id, caption=cap, reply_markup=InlineKeyboardMarkup(btn))
+            await client.send_cached_media(
+                chat_id=message.from_user.id, 
+                file_id=file.file_id, 
+                caption=cap, 
+                reply_markup=InlineKeyboardMarkup(btn)
+            )
             return
 
     # सामान्य /start कमांड का रिपॉन्स
@@ -105,7 +112,7 @@ async def stats(bot, message):
 
     files = await Media.count_documents()
     admins_count = len(ADMINS)
-    uptime = get_readable_time(time_now() - temp.START_TIME)
+    uptime = get_readable_time(time.time() - temp.START_TIME)
     
     # मोंगोडीबी फ्री टियर स्टेट्स
     from database.users_chats_db import db
@@ -144,7 +151,7 @@ async def delete_all_index(bot, message):
         return
 
     btn = [
-        [InlineKeyboardButton("⚠️ हाँ, पूरा डेटाबेस उड़ाएं", callback_data="delete_all")],
+        [InlineKeyboardButton("⚠️ हाँ, पूरा डेटाबेस उड़ाएं", callback_data="delete_all")],
         [InlineKeyboardButton("❌ रद्द करें", callback_data="close_data")]
     ]
     files = await Media.count_documents()
@@ -192,9 +199,9 @@ async def ping(client, message):
     if message.from_user.id not in ADMINS:
         return
         
-    start_time = time_now.monotonic()
+    start_time = time.monotonic()
     msg = await message.reply("⚡")
-    end_time = time_now.monotonic()
+    end_time = time.monotonic()
     await msg.edit(f'<b>⏱️ रिस्पॉन्स स्पीड: {round((end_time - start_time) * 1000)} ms</b>')
 
 @Client.on_message(filters.command('id') & filters.incoming)
