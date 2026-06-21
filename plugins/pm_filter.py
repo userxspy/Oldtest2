@@ -9,19 +9,18 @@ from database.ia_filterdb import get_search_results, get_file_details
 
 BUTTONS = {}
 
-# Fix: Changed ~filters.command to ~filters.regex(r"^/") to avoid function operand TypeError
 @Client.on_message(filters.private & filters.text & filters.incoming & ~filters.regex(r"^/"))
 async def pm_search(client, message):
-    """Handles movie/file search in PM for Admins only (Pure Text Mode)"""
+    """Handles movie/file search in PM instantly without intermediate searching status"""
     if message.from_user.id not in ADMINS:
         return  # Bot remains completely silent for non-admins
 
     search = message.text.strip()
-    status_msg = await message.reply(f"<b><i>🔍 Searching `{search}` in database...</i></b>", quote=True)
     
+    # Fetch results directly from MongoDB first to eliminate intermediate message latency
     files, offset, total_results = await get_search_results(search)
     if not files:
-        await status_msg.edit_text(script.NOT_FILE_TXT.format(message.from_user.mention, search))
+        await message.reply(script.NOT_FILE_TXT.format(message.from_user.mention, search), quote=True)
         return
 
     req = message.from_user.id
@@ -43,11 +42,14 @@ async def pm_search(client, message):
     btn.append([InlineKeyboardButton("🙅 Close", callback_data=f"close#{req}")])
     
     caption = f"<b>✅ Search Results:- {search}\n🎬 Total {total_results} files found 👇</b>{files_link}"
-    await status_msg.edit_text(
+    
+    # Direct reply to ensure lightning fast loading speed
+    await message.reply(
         text=caption, 
         reply_markup=InlineKeyboardMarkup(btn), 
         disable_web_page_preview=True, 
-        parse_mode=enums.ParseMode.HTML
+        parse_mode=enums.ParseMode.HTML,
+        quote=True
     )
 
 
