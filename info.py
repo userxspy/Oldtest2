@@ -64,7 +64,7 @@ COLLECTION_NAME = environ.get('COLLECTION_NAME', 'Files')
 
 # फ़ाइल कैप्शन (बाकी सभी बाहरी लिंक्स डिलीट)
 FILE_CAPTION = environ.get("FILE_CAPTION", script.FILE_CAPTION)
-MAX_BTN = int(environ.get('MAX_BTN', 10))
+MAX_BTN = int(environ.get('MAX_BTN', 12))
 CACHE_TIME = int(environ.get('CACHE_TIME', 300))
 
 # बुनियादी सेटिंग्स
