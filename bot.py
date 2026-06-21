@@ -36,13 +36,16 @@ class Bot(Client):
         
         # रीस्टार्ट मैसेज हैंडलर
         if os.path.exists('restart.txt'):
-            with open("restart.txt") as file:
-                chat_id, msg_id = map(int, file)
             try:
+                with open("restart.txt") as file:
+                    chat_id, msg_id = map(int, file.read().split())
                 await self.edit_message_text(chat_id=chat_id, message_id=msg_id, text='Restarted Successfully!')
             except Exception:
                 pass
-            os.remove('restart.txt')
+            try:
+                os.remove('restart.txt')
+            except Exception:
+                pass
             
         temp.BOT = self
         me = await self.get_me()
@@ -56,6 +59,7 @@ class Bot(Client):
         app = web.AppRunner(web_app)
         await app.setup()
         await web.TCPSite(app, "0.0.0.0", PORT).start()
+        print(f"🌐 स्ट्रीमिंग वेब सर्वर पोर्ट {PORT} पर एक्टिव है!")
         
         # एडमिन और चैनल्स वेरिफिकेशन लॉग्स
         try:
@@ -94,12 +98,22 @@ class Bot(Client):
                 yield message
                 current += 1
 
-app = Bot()
+# --- 🚀 UVLOOP + SCRIPT LIFECYCLE FIX ---
+async def main():
+    app = Bot()
+    await app.start()
+    try:
+        # कस्टमाइज्ड कीप-अलाइव लूप ताकि कोयाब कंटेनर को कभी शटडाउन न करे
+        while True:
+            await asyncio.sleep(3600)
+    except (KeyboardInterrupt, SystemExit):
+        await app.stop()
 
 if __name__ == "__main__":
     try:
-        app.run()
+        # asyncio.run() का उपयोग करके 'MainThread' में एक क्लीन न्यू इवेंट लूप असाइन करें
+        asyncio.run(main())
     except FloodWait as vp:
         print(f"Flood Wait आ गया है, {get_readable_time(vp.value)} के लिए स्लीप कर रहे हैं...")
         time.sleep(vp.value)
-        app.run()
+        asyncio.run(main())
