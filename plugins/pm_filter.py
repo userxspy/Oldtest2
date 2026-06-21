@@ -9,30 +9,30 @@ from database.ia_filterdb import get_search_results, get_file_details
 
 BUTTONS = {}
 
-@Client.on_message(filters.private & filters.text & filters.incoming)
+# Fix 1: Added ~filters.command to prevent text search from capturing deep links like /start file_xxx
+@Client.on_message(filters.private & filters.text & filters.incoming & ~filters.command)
 async def pm_search(client, message):
-    """सिर्फ एडमिंस के लिए पर्सनल चैट में मूवी/फाइल सर्च हैंडलर (प्योर टेक्स्ट मोड)"""
+    """Handles movie/file search in PM for Admins only (Pure Text Mode)"""
     if message.from_user.id not in ADMINS:
-        return # गैर-एडमिंस के लिए बोट पूरी तरह से साइलेंट रहेगा
+        return  # Bot remains completely silent for non-admins
 
     search = message.text.strip()
-    s = await message.reply(f"<b><i>🔍 `{search}` को डेटा规范 में खोजा जा रहा है...</i></b>", quote=True)
+    status_msg = await message.reply(f"<b><i>🔍 Searching `{search}` in database...</i></b>", quote=True)
     
     files, offset, total_results = await get_search_results(search)
     if not files:
-        await s.edit_text(script.NOT_FILE_TXT.format(message.from_user.mention, search))
+        await status_msg.edit_text(script.NOT_FILE_TXT.format(message.from_user.mention, search))
         return
 
     req = message.from_user.id
     key = f"{message.chat.id}-{message.id}"
     BUTTONS[key] = search
 
-    # --- 🟢 बटन मोड खत्म, प्योर टेक्स्ट हाइपरलिंक्स फॉर्मेशन ---
+    # Text mode clickable HTML hyperlinks formation
     files_link = ""
     for file in files:
-        files_link += f"\n\n📁 <a href='https://t.me/{temp.U_NAME}?start=file_{file.file_id}'>[{get_size(file.file_size)}] {file.file_name}</a>"
+        files_link += f"\n\n 📁 <a href='https://t.me/{temp.U_NAME}?start=file_{file.file_id}'>[{get_size(file.file_size)}] {file.file_name}</a>"
 
-    # बटन लेआउट में अब केवल पेजिनेशन और क्लोज बटन होंगे, कोई फाइल बटन नहीं!
     btn = []
     if offset != "":
         btn.append([
@@ -40,11 +40,11 @@ async def pm_search(client, message):
             InlineKeyboardButton(text="NEXT ⏩", callback_data=f"next_{req}_{key}_{offset}")
         ])
     
-    btn.append([InlineKeyboardButton("🙅 क्लोज़", callback_data=f"close#{req}")])
+    btn.append([InlineKeyboardButton("🙅 Close", callback_data=f"close#{req}")])
     
-    cap = f"<b>✅ सर्च रिजल्ट्स:- {search}\n🎬 कुल {total_results} फाइलें मिलीं 👇</b>{files_link}"
-    await s.edit_text(
-        text=cap, 
+    caption = f"<b>✅ Search Results:- {search}\n🎬 Total {total_results} files found 👇</b>{files_link}"
+    await status_msg.edit_text(
+        text=caption, 
         reply_markup=InlineKeyboardMarkup(btn), 
         disable_web_page_preview=True, 
         parse_mode=enums.ParseMode.HTML
@@ -53,20 +53,19 @@ async def pm_search(client, message):
 
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
-    """नेक्स्ट और बैक पेजिनेशन हैंडलर (Text Mode Results)"""
+    """Handles pagination for Next and Back pages (Text Mode Results)"""
     ident, req, key, offset = query.data.split("_")
     if int(req) != query.from_user.id:
-        return await query.answer("यह आपके लिए नहीं है! ❌", show_alert=True)
+        return await query.answer("This is not for you! ❌", show_alert=True)
         
     search = BUTTONS.get(key)
     if not search:
-        return await query.answer("कृपया दोबारा नया नाम लिखकर सर्च करें! 🔄", show_alert=True)
+        return await query.answer("Please search again with a new keyword! 🔄", show_alert=True)
 
     files, n_offset, total = await get_search_results(search, offset=int(offset))
     if not files:
         return
 
-    # पेजिनेशन के लिए टेक्स्ट लिंक्स का निर्माण
     files_link = ""
     for file in files:
         files_link += f"\n\n📁 <a href='https://t.me/{temp.U_NAME}?start=file_{file.file_id}'>[{get_size(file.file_size)}] {file.file_name}</a>"
@@ -83,11 +82,11 @@ async def next_page(bot, query):
     if n_offset != "":
         p_buttons.append(InlineKeyboardButton("NEXT ⏩", callback_data=f"next_{req}_{key}_{n_offset}"))
         
-    btn = [p_buttons, [InlineKeyboardButton("🙅 क्लोज़", callback_data=f"close#{req}")]]
+    btn = [p_buttons, [InlineKeyboardButton("🙅 Close", callback_data=f"close#{req}")]]
     
-    cap = f"<b>✅ सर्च रिजल्ट्स:- {search}\n🎬 कुल {total} फाइलें मिलीं 👇</b>{files_link}"
+    caption = f"<b>✅ Search Results:- {search}\n🎬 Total {total} files found 👇</b>{files_link}"
     await query.message.edit_text(
-        text=cap, 
+        text=caption, 
         reply_markup=InlineKeyboardMarkup(btn), 
         disable_web_page_preview=True, 
         parse_mode=enums.ParseMode.HTML
@@ -96,39 +95,39 @@ async def next_page(bot, query):
 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
-    """सभी आवश्यक एडमिन कॉलबैक क्लिक्स को हैंडल करने का सिंगल क्लीन फंक्शन"""
+    """Handles all necessary callback clicks securely"""
     data = query.data
     user_id = query.from_user.id
 
-    # --- 🚀 लाइव स्ट्रीमिंग कनवर्टर (Convert to Integer Link on Click) ---
+    # On-the-fly streaming converter
     if data.startswith("stream"):
         file_id = data.split('#', 1)[1]
-        await query.answer("स्ट्रीमिंग लिंक्स जनरेट हो रही हैं... ⏱️")
+        await query.answer("Generating streaming links... ⏱️")
         
-        # फाइल को BIN_CHANNEL में भेजकर फ्रेश इंटीजर message_id प्राप्त करें
+        # Forward file to BIN_CHANNEL to fetch fresh integer message ID
         msg = await client.send_cached_media(chat_id=BIN_CHANNEL, file_id=file_id)
         
         watch = f"{URL}watch/{msg.id}"
         download = f"{URL}download/{msg.id}"
         
-        # बटन को तुरंत लाइव स्ट्रीम लिंक्स के साथ बदलें
         btn = [[
             InlineKeyboardButton("⚡ Watch Online", url=watch),
             InlineKeyboardButton("🚀 Fast Download", url=download)
         ], [
-            InlineKeyboardButton('🙅 क्लोज़', callback_data='close_data')
+            InlineKeyboardButton("🙅 Close", callback_data="close_data")
         ]]
         await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
+
+    # Fix 2: Handled 'close_data' explicitly first to avoid string unpacking value errors
+    elif data == "close_data":
+        await query.message.delete()
 
     elif data.startswith("close"):
         _, req = data.split("#")
         if int(req) == user_id:
             await query.message.delete()
         else:
-            await query.answer("यह आपके लिए नहीं है! ❌", show_alert=True)
-
-    elif data == "close_data":
-        await query.message.delete()
+            await query.answer("This is not for you! ❌", show_alert=True)
 
     elif data == "buttons":
         await query.answer("⚙️", show_alert=False)
