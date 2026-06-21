@@ -19,55 +19,76 @@
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--bg-main);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            color: var(--text-main); overflow: hidden;
-            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            color: var(--text-main); overflow-x: hidden;
+            display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
             -webkit-font-smoothing: antialiased;
         }}
 
-        /* Transparent Blurred Minimal Header */
+        /* Header Alignment in Natural Flow */
         header {{
-            width: 100%; padding: 25px 20px; box-sizing: border-box; display: flex; justify-content: center;
+            width: 100%; padding: 30px 20px 10px 20px; box-sizing: border-box; display: flex; justify-content: center;
             background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%); z-index: 10;
         }}
 
         #file-name {{
             font-size: 1.2rem; font-weight: 600; text-align: center; max-width: 85%;
-            color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            letter-spacing: -0.3px;
+            color: var(--text-main); line-height: 1.4;
+            letter-spacing: -0.3px; word-break: break-word;
         }}
 
         @media (max-width: 768px) {{
-            #file-name {{ font-size: 0.95rem; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }}
+            #file-name {{ font-size: 1rem; }}
         }}
 
-        /* Responsive Player Container */
+        /* Container positioned perfectly right below the file name */
         .container {{
-            width: 100%; max-width: 960px; padding: 0 20px; box-sizing: border-box;
-            display: flex; justify-content: center; align-items: center; flex-grow: 1;
+            width: 100%; max-width: 960px; padding: 15px 20px; box-sizing: border-box;
+            display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
         }}
 
         .player-wrapper {{
             width: 100%; background-color: #000; border-radius: 12px; overflow: hidden;
             box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 1px rgba(255,255,255,0.08); aspect-ratio: 16/9;
+            margin-bottom: 25px;
+        }}
+
+        /* Premium Standalone Download Button Styles */
+        .download-btn {{
+            display: inline-flex; align-items: center; justify-content: center;
+            background-color: var(--accent-color); color: #ffffff; text-decoration: none;
+            padding: 14px 40px; font-size: 0.95rem; font-weight: 700; border-radius: 30px;
+            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4); transition: transform 0.2s ease, background-color 0.2s ease;
+            margin-bottom: 20px; letter-spacing: 0.5px; text-transform: uppercase;
+        }}
+
+        .download-btn:hover {{
+            background-color: #b80710; transform: translateY(-2px);
+        }}
+
+        .download-btn:active {{
+            transform: translateY(0);
         }}
 
         /* Sleek Notification Footer */
         footer {{
-            width: 100%; padding: 25px 20px; box-sizing: border-box; display: flex; justify-content: center; z-index: 10;
-            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+            width: 100%; padding: 20px; box-sizing: border-box; display: flex; justify-content: center; margin-top: auto;
         }}
 
         .alert-box {{
             max-width: 600px; text-align: center; font-size: 0.8rem; line-height: 1.4;
             color: var(--text-muted); background: rgba(255, 255, 255, 0.02);
             padding: 12px 24px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         }}
 
         /* Plyr Media Player Custom Skin */
         .plyr {{ font-family: inherit; height: 100%; width: 100%; }}
         .plyr__control--overlaid {{ background: rgba(229, 9, 20, 0.9) !important; }}
         .plyr--video .plyr__control:hover {{ background: var(--accent-color) !important; color: #fff !important; }}
+        
+        /* Strict CSS to completely hide the sliding range input panel for volume */
+        .plyr__volume input[type=range] {{
+            display: none !important;
+        }}
     </style>
 </head>
 <body>
@@ -80,6 +101,8 @@
         <div class="player-wrapper">
             <{tag} src="{src}" class="player" controls playsinline></{tag}>
         </div>
+        
+        <a href="{src}" class="download-btn">⬇️ Download Video</a>
     </div>
 
     <footer>
@@ -91,10 +114,9 @@
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {{
+            // 'mute' is added back for button control, while 'volume' slider remains omitted
             const controls = [
-                'play-large', 'rewind', 'play', 'fast-forward', 
-                'progress', 'current-time', 'duration', 
-                'mute', 'volume', 'settings', 'download', 'fullscreen'
+                'play-large', 'play', 'mute', 'progress', 'current-time', 'duration', 'fullscreen'
             ];
             const player = new Plyr('.player', {{ 
                 controls,
