@@ -34,8 +34,8 @@ class TGCustomYield:
 
     @staticmethod
     async def generate_file_properties(msg: Message):
-        """लाइव मैसेज से ताज़ा फ़ाइल आईडी और प्रॉपर्टीज डिकोड करना"""
-        media = getattr(msg, msg.media.value, None)
+        """Decodes fresh file IDs and object properties from live Telegram messages"""
+        media = msg.document or msg.video or msg.audio
         file_id_obj = FileId.decode(media.file_id)
         
         setattr(file_id_obj, "file_size", getattr(media, "file_size", 0))
@@ -119,13 +119,12 @@ async def root_route_handler(request):
 
 @routes.get("/watch/{message_id}")
 async def watch_handler(request):
-    """BIN_CHANNEL Message ID आधारित ऑनलाइन वीडियो प्लेयर रेंडरर"""
+    """Renders the custom cinematic video player based on BIN_CHANNEL message ID"""
     try:
         message_id = int(request.match_info['message_id'])
-        # सीधे बिन चैनल से लाइव मैसेज उठाएं (ताजा फाइल रेफरेंस के साथ)
         media_msg = await temp.BOT.get_messages(BIN_CHANNEL, message_id)
         if not media_msg or media_msg.empty:
-            return web.Response(text="<h1>यह फ़ाइल सर्वर से डिलीट हो चुकी है! ❌</h1>", content_type='text/html')
+            return web.Response(text="<h1>This file has been deleted from the server! ❌</h1>", content_type='text/html')
 
         file_properties = await TGCustomYield.generate_file_properties(media_msg)
         file_name = file_properties.file_name
@@ -136,15 +135,17 @@ async def watch_handler(request):
         if tag == 'video':
             async with aiofiles.open('web/template/watch.html', mode='r', encoding='utf-8') as r:
                 template_content = await r.read()
-                html = template_content.format(
-                    heading=f"Watch - {file_name}",
-                    file_name=file_name,
-                    src=src,
-                    tag=tag
-                )
+                
+            # Fixed: Replaced old {tag} parameter with the required {mime_type} mapping
+            html = template_content.format(
+                heading=f"Watch - {file_name}",
+                file_name=file_name,
+                src=src,
+                mime_type=mime_type
+            )
             return web.Response(text=html, content_type='text/html')
         else:
-            return web.Response(text="<h1>यह फ़ाइल ऑनलाइन स्ट्रीम करने योग्य नहीं है! 😕</h1>", content_type='text/html')
+            return web.Response(text="<h1>This file format is not supported for online streaming! 😕</h1>", content_type='text/html')
     except Exception as e:
         return web.Response(text=f"<h1>Watch Engine Error: {e}</h1>", content_type='text/html')
 
@@ -155,10 +156,11 @@ async def download_handler(request):
         message_id = int(request.match_info['message_id'])
         media_msg = await temp.BOT.get_messages(BIN_CHANNEL, message_id)
         if not media_msg or media_msg.empty:
-            return web.Response(text="<h1>फ़ाइल नहीं मिली! ❌</h1>", content_type='text/html')
+            return web.Response(text="<h1>File not found! ❌</h1>", content_type='text/html')
 
         file_properties = await TGCustomYield.generate_file_properties(media_msg)
-        file_id_obj = FileId.decode(media_msg.document.file_id if media_msg.document else media_msg.video.file_id)
+        media_obj = media_msg.document or media_msg.video or media_msg.audio
+        file_id_obj = FileId.decode(media_obj.file_id)
         file_size = file_properties.file_size
 
         range_header = request.headers.get('Range', 0)
