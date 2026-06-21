@@ -1,14 +1,20 @@
-pyrofork==2.3.43
-tgcrypto
+# --- टेलीग्राम कोर और मॉडल्स (Hydrogram Engine) ---
+hydrogram
+pyromod
+
+# --- डेटाबेस ड्राइवर (Raw Motor Client) ---
 motor
-marshmallow==3.12.2
 pymongo
-pytz
-cinemagoer
-shortzy
+
+# --- C-Level स्पीड बूस्टर्स (UVLoop & Fast JSON Parsing) ---
+uvloop; sys_platform != 'win32'
+orjson
+
+# --- वेब स्ट्रीमिंग सर्वर और एसिंक्रोनस IO ---
 aiohttp
 aiofiles
+
+# --- अन्य बुनियादी आवश्यकताएं ---
+pytz
 requests
 speedtest-cli
-umongo==3.1.0
-dnspython
