@@ -6,53 +6,101 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{heading}</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        :root {{ --bg-color: linear-gradient(-45deg, #7400b8, #6930c3, #5e60ce, #5390d9); --filename-color: white; --player-hover-color: #fcc700; }}
-        * {{ box-sizing: border-box; }}
-        body {{ height: 100vh; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-image: var(--bg-color); background-size: 400%; animation: move 15s alternate infinite; font-family: 'Raleway', sans-serif; transition: background 0.5s ease; }}
-        @keyframes move {{ 0% {{ background-position: 0% 50%; }} 50% {{ background-position: 100% 50%; }} 100% {{ background-position: 0% 50%; }} }}
-        body.dark {{ background-image: radial-gradient(#221f22, #1E1E1E) !important; }}
-        header {{ position: absolute; top: 0; width: 100%; display: flex; justify-content: center; padding: 20px; }}
-        .toggle {{ position: absolute; right: 20px; top: 20px; width: 40px; height: 40px; background: aliceblue; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 10; }}
-        .toggle:before {{ content: "\f186"; font-family: 'Font Awesome 5 Free'; font-weight: 900; color: #1e1e1e; font-size: 18px; }}
-        body.dark .toggle:before {{ content: '\f185'; color: #fcc700; }}
-        #file-name {{ color: var(--filename-color); font-size: 1.5rem; font-weight: 700; text-align: center; max-width: 80%; word-break: break-word; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }}
-        .container {{ width: 65%; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }}
-        footer {{ position: fixed; bottom: 15px; width: 100%; text-align: center; padding: 0 20px; }}
-        footer p {{ color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0; }}
-        body.dark footer p {{ color: #999; }}
-        @media (max-width: 900px) {{ .container {{ width: 95%; }} #file-name {{ font-size: 1.1rem; }} }}
-        .plyr__control--overlaid {{ background: rgba(116, 0, 184, 0.9); }}
-        .plyr--video .plyr__control:hover {{ background: var(--player-hover-color); color: black !important; }}
+        :root {{
+            --bg-main: #0a0a0d;
+            --accent-color: #e50914; /* Premium Netflix Red */
+            --text-main: #ffffff;
+            --text-muted: #73737d;
+        }}
+        
+        html, body {{
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main); overflow: hidden;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            -webkit-font-smoothing: antialiased;
+        }}
+
+        /* Transparent Blurred Minimal Header */
+        header {{
+            width: 100%; padding: 25px 20px; box-sizing: border-box; display: flex; justify-content: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%); z-index: 10;
+        }}
+
+        #file-name {{
+            font-size: 1.2rem; font-weight: 600; text-align: center; max-width: 85%;
+            color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: -0.3px;
+        }}
+
+        @media (max-width: 768px) {{
+            #file-name {{ font-size: 0.95rem; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }}
+        }}
+
+        /* Responsive Player Container */
+        .container {{
+            width: 100%; max-width: 960px; padding: 0 20px; box-sizing: border-box;
+            display: flex; justify-content: center; align-items: center; flex-grow: 1;
+        }}
+
+        .player-wrapper {{
+            width: 100%; background-color: #000; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 1px rgba(255,255,255,0.08); aspect-ratio: 16/9;
+        }}
+
+        /* Sleek Notification Footer */
+        footer {{
+            width: 100%; padding: 25px 20px; box-sizing: border-box; display: flex; justify-content: center; z-index: 10;
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+        }}
+
+        .alert-box {{
+            max-width: 600px; text-align: center; font-size: 0.8rem; line-height: 1.4;
+            color: var(--text-muted); background: rgba(255, 255, 255, 0.02);
+            padding: 12px 24px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }}
+
+        /* Plyr Media Player Custom Skin */
+        .plyr {{ font-family: inherit; height: 100%; width: 100%; }}
+        .plyr__control--overlaid {{ background: rgba(229, 9, 20, 0.9) !important; }}
+        .plyr--video .plyr__control:hover {{ background: var(--accent-color) !important; color: #fff !important; }}
     </style>
 </head>
 <body>
+
     <header>
-        <div class="toggle" onclick="toggleTheme()"></div>
         <div id="file-name">{file_name}</div>
     </header>
 
     <div class="container">
-        <{tag} src="{src}" class="player" controls playsinline></{tag}>
+        <div class="player-wrapper">
+            <{tag} src="{src}" class="player" controls playsinline></{tag}>
+        </div>
     </div>
 
     <footer>
-        <p>⚠️ वीडियो प्ले नहीं हो रहा? ब्राउज़र इस वीडियो कोडक (Codec) को सपोर्ट नहीं कर रहा है। कृपया डायरेक्ट डाउनलोड करके देखें।</p>
+        <div class="alert-box">
+            💡 <b>Playback Issue?</b> If the video fails to play, your browser might lack native codec support (e.g., MKV/HEVC). Please download the file directly.
+        </div>
     </footer>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        const controls = ['play-large', 'rewind', 'play', 'fast-forward', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'download', 'fullscreen'];
-        document.addEventListener('DOMContentLoaded', () => {{ const player = new Plyr('.player', {{ controls }}); }});
-        
-        function toggleTheme() {{
-            document.body.classList.toggle('dark');
-            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-        }}
-        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+        document.addEventListener('DOMContentLoaded', () => {{
+            const controls = [
+                'play-large', 'rewind', 'play', 'fast-forward', 
+                'progress', 'current-time', 'duration', 
+                'mute', 'volume', 'settings', 'download', 'fullscreen'
+            ];
+            const player = new Plyr('.player', {{ 
+                controls,
+                ratio: '16:9'
+            }});
+        }});
     </script>
 </body>
 </html>
