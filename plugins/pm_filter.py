@@ -9,8 +9,8 @@ from database.ia_filterdb import get_search_results, get_file_details
 
 BUTTONS = {}
 
-# Fix 1: Added ~filters.command to prevent text search from capturing deep links like /start file_xxx
-@Client.on_message(filters.private & filters.text & filters.incoming & ~filters.command)
+# Fix: Changed ~filters.command to ~filters.regex(r"^/") to avoid function operand TypeError
+@Client.on_message(filters.private & filters.text & filters.incoming & ~filters.regex(r"^/"))
 async def pm_search(client, message):
     """Handles movie/file search in PM for Admins only (Pure Text Mode)"""
     if message.from_user.id not in ADMINS:
@@ -31,7 +31,7 @@ async def pm_search(client, message):
     # Text mode clickable HTML hyperlinks formation
     files_link = ""
     for file in files:
-        files_link += f"\n\n 📁 <a href='https://t.me/{temp.U_NAME}?start=file_{file.file_id}'>[{get_size(file.file_size)}] {file.file_name}</a>"
+        files_link += f"\n\n📁 <a href='https://t.me/{temp.U_NAME}?start=file_{file.file_id}'>[{get_size(file.file_size)}] {file.file_name}</a>"
 
     btn = []
     if offset != "":
@@ -118,7 +118,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         ]]
         await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(btn))
 
-    # Fix 2: Handled 'close_data' explicitly first to avoid string unpacking value errors
+    # Handled 'close_data' explicitly first to avoid string unpacking value errors
     elif data == "close_data":
         await query.message.delete()
 
