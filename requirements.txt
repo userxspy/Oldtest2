@@ -8,5 +8,4 @@ aiohttp
 aiofiles
 pytz
 requests
-speedtest-cli
 TgCrypto
