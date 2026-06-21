@@ -1,38 +1,33 @@
 import math
 from typing import Union
-from pyrogram.types import Message
+from hydrogram.types import Message
+from hydrogram import Client, utils, raw
+from hydrogram.session import Session, Auth
+from hydrogram.errors import AuthBytesInvalid
+from hydrogram.file_id import FileId, FileType, ThumbnailSource
 from utils import temp
-from pyrogram import Client, utils, raw
-from pyrogram.session import Session, Auth
-from pyrogram.errors import AuthBytesInvalid
-from pyrogram.file_id import FileId, FileType, ThumbnailSource
-
 
 async def chunk_size(length):
+    """बाइट साइज के आधार पर ऑप्टिमाइज्ड डेटा चंक साइज की गणना"""
     return 2 ** max(min(math.ceil(math.log2(length / 1024)), 10), 2) * 1024
 
-
 async def offset_fix(offset, chunksize):
+    """बाइट ऑफसेट को फिक्स करने का मेथड"""
     offset -= offset % chunksize
     return offset
 
-
 class TGCustomYield:
     def __init__(self):
-        """ A custom method to stream files from telegram.
-        functions:
-            generate_file_properties: returns the properties for a media on a specific message contained in FileId class.
-            generate_media_session: returns the media session for the DC that contains the media file on the message.
-            yield_file: yield a file from telegram servers for streaming.
-        """
+        """टेलीग्राम सर्वर से डायरेक्ट मीडिया चंक्स फेच करके वीडियो स्ट्रीम करने का इंजन"""
         self.main_bot = temp.BOT
 
     @staticmethod
     async def generate_file_properties(msg: Message):
+        """मैसेज से फ़ाइल आईडी डीकोड करना और प्रॉपर्टीज सेट करना"""
         media = getattr(msg, msg.media.value, None)
         file_id_obj = FileId.decode(media.file_id)
 
-        # The below lines are added to avoid a break in routes.py
+        # Routes के क्रैश को रोकने के लिए एट्रिब्यूट्स सेट करें
         setattr(file_id_obj, "file_size", getattr(media, "file_size", 0))
         setattr(file_id_obj, "mime_type", getattr(media, "mime_type", ""))
         setattr(file_id_obj, "file_name", getattr(media, "file_name", ""))
@@ -40,25 +35,24 @@ class TGCustomYield:
         return file_id_obj
 
     async def generate_media_session(self, client: Client, msg: Message):
+        """Hydrogram के अनुसार मीडिया डेटा सेंटर (DC) सत्र उत्पन्न करना"""
         data = await self.generate_file_properties(msg)
-
         media_session = client.media_sessions.get(data.dc_id, None)
 
         if media_session is None:
+            # Hydrogram स्टोरेज और टेस्ट मोड कम्पैटिबिलिटी फिक्स
+            is_test_mode = await client.storage.test_mode()
             if data.dc_id != await client.storage.dc_id():
                 media_session = Session(
-                    client, data.dc_id, await Auth(client, data.dc_id, await client.storage.test_mode()).create(),
-                    await client.storage.test_mode(), is_media=True
+                    client, data.dc_id, await Auth(client, data.dc_id, is_test_mode).create(),
+                    is_test_mode, is_media=True
                 )
                 await media_session.start()
 
                 for _ in range(3):
                     exported_auth = await client.invoke(
-                        raw.functions.auth.ExportAuthorization(
-                            dc_id=data.dc_id
-                        )
+                        raw.functions.auth.ExportAuthorization(dc_id=data.dc_id)
                     )
-
                     try:
                         await media_session.send(
                             raw.functions.auth.ImportAuthorization(
@@ -76,7 +70,7 @@ class TGCustomYield:
             else:
                 media_session = Session(
                     client, data.dc_id, await client.storage.auth_key(),
-                    await client.storage.test_mode(), is_media=True
+                    is_test_mode, is_media=True
                 )
                 await media_session.start()
 
@@ -86,6 +80,7 @@ class TGCustomYield:
 
     @staticmethod
     async def get_location(file_id: FileId):
+        """फ़ाइल आईडी के आधार पर टेलीग्राम का इनपुट फ़ाइल लोकेशन ऑब्जेक्ट जनरेट करना"""
         file_type = file_id.file_type
 
         if file_type == FileType.CHAT_PHOTO:
@@ -96,15 +91,12 @@ class TGCustomYield:
                 )
             else:
                 if file_id.chat_access_hash == 0:
-                    peer = raw.types.InputPeerChat(
-                        chat_id=-file_id.chat_id
-                    )
+                    peer = raw.types.InputPeerChat(chat_id=-file_id.chat_id)
                 else:
                     peer = raw.types.InputPeerChannel(
                         channel_id=utils.get_channel_id(file_id.chat_id),
                         access_hash=file_id.chat_access_hash
                     )
-
             location = raw.types.InputPeerPhotoFileLocation(
                 peer=peer,
                 volume_id=file_id.volume_id,
@@ -125,17 +117,16 @@ class TGCustomYield:
                 file_reference=file_id.file_reference,
                 thumb_size=file_id.thumbnail_size
             )
-
         return location
 
     async def yield_file(self, media_msg: Message, offset: int, first_part_cut: int,
-                         last_part_cut: int, part_count: int, chunk_size: int) -> Union[str, None]: #pylint: disable=unsubscriptable-object
+                         last_part_cut: int, part_count: int, chunk_size: int) -> Union[bytes, None]:
+        """टेलीग्राम सर्वर से डेटा पैकेट्स (Bytes) रीड करके प्लेयर को लाइव स्ट्रीम यील्ड करना"""
         client = self.main_bot
         data = await self.generate_file_properties(media_msg)
         media_session = await self.generate_media_session(client, media_msg)
 
         current_part = 1
-
         location = await self.get_location(data)
 
         r = await media_session.send(
@@ -167,46 +158,4 @@ class TGCustomYield:
                         limit=chunk_size
                     ),
                 )
-
                 current_part += 1
-
-    async def download_as_bytesio(self, media_msg: Message):
-        client = self.main_bot
-        data = await self.generate_file_properties(media_msg)
-        media_session = await self.generate_media_session(client, media_msg)
-
-        location = await self.get_location(data)
-
-        limit = 1024 * 1024
-        offset = 0
-
-        r = await media_session.send(
-            raw.functions.upload.GetFile(
-                location=location,
-                offset=offset,
-                limit=limit
-            )
-        )
-
-        if isinstance(r, raw.types.upload.File):
-            m_file = []
-            # m_file.name = file_name
-            while True:
-                chunk = r.bytes
-
-                if not chunk:
-                    break
-
-                m_file.append(chunk)
-
-                offset += limit
-
-                r = await media_session.send(
-                    raw.functions.upload.GetFile(
-                        location=location,
-                        offset=offset,
-                        limit=limit
-                    )
-                )
-
-            return m_file
