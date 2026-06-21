@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta property="og:image" content="https://i.ibb.co/M8S0Zzj/live-streaming.png" itemprop="thumbnailUrl">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{heading}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <style>
+        :root {{ --bg-color: linear-gradient(-45deg, #7400b8, #6930c3, #5e60ce, #5390d9); --filename-color: white; --player-hover-color: #fcc700; }}
+        * {{ box-sizing: border-box; }}
+        body {{ height: 100vh; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-image: var(--bg-color); background-size: 400%; animation: move 15s alternate infinite; font-family: 'Raleway', sans-serif; transition: background 0.5s ease; }}
+        @keyframes move {{ 0% {{ background-position: 0% 50%; }} 50% {{ background-position: 100% 50%; }} 100% {{ background-position: 0% 50%; }} }}
+        body.dark {{ background-image: radial-gradient(#221f22, #1E1E1E) !important; }}
+        header {{ position: absolute; top: 0; width: 100%; display: flex; justify-content: center; padding: 20px; }}
+        .toggle {{ position: absolute; right: 20px; top: 20px; width: 40px; height: 40px; background: aliceblue; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 10; }}
+        .toggle:before {{ content: "\f186"; font-family: 'Font Awesome 5 Free'; font-weight: 900; color: #1e1e1e; font-size: 18px; }}
+        body.dark .toggle:before {{ content: '\f185'; color: #fcc700; }}
+        #file-name {{ color: var(--filename-color); font-size: 1.5rem; font-weight: 700; text-align: center; max-width: 80%; word-break: break-word; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }}
+        .container {{ width: 65%; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }}
+        footer {{ position: fixed; bottom: 15px; width: 100%; text-align: center; padding: 0 20px; }}
+        footer p {{ color: rgba(255,255,255,0.8); font-size: 0.9rem; margin: 0; }}
+        body.dark footer p {{ color: #999; }}
+        @media (max-width: 900px) {{ .container {{ width: 95%; }} #file-name {{ font-size: 1.1rem; }} }}
+        .plyr__control--overlaid {{ background: rgba(116, 0, 184, 0.9); }}
+        .plyr--video .plyr__control:hover {{ background: var(--player-hover-color); color: black !important; }}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="toggle" onclick="toggleTheme()"></div>
+        <div id="file-name">{file_name}</div>
+    </header>
+
+    <div class="container">
+        <{tag} src="{src}" class="player" controls playsinline></{tag}>
+    </div>
+
+    <footer>
+        <p>⚠️ वीडियो प्ले नहीं हो रहा? ब्राउज़र इस वीडियो कोडक (Codec) को सपोर्ट नहीं कर रहा है। कृपया डायरेक्ट डाउनलोड करके देखें।</p>
+    </footer>
+
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script>
+        const controls = ['play-large', 'rewind', 'play', 'fast-forward', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'download', 'fullscreen'];
+        document.addEventListener('DOMContentLoaded', () => {{ const player = new Plyr('.player', {{ controls }}); }});
+        
+        function toggleTheme() {{
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        }}
+        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+    </script>
+</body>
+</html>
