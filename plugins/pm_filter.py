@@ -42,7 +42,7 @@ async def pm_search(client, message):
     btn.append([InlineKeyboardButton("🙅 Close", callback_data=f"close#{req}")])
     
     # --- 🟢 ONLY TOTAL FILES ENCLOSED INSIDE Telegram BLOCKQUOTE ---
-    caption = f"<blockquote>🎬 <b>Total {total_results} Files found</b> </blockquote>{files_link}"
+    caption = f"<blockquote>🎬 <b>Total {total_results} Files</b> </blockquote>{files_link}"
     
     await message.reply(
         text=caption, 
