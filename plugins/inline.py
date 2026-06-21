@@ -1,4 +1,5 @@
-from hydrogram import Client, emoji
+from hydrogram import Client
+from hydrogram.enums import emoji # <- hydrogram के अनुसार सही इम्पोर्ट पाथ
 from hydrogram.types import InlineQueryResultCachedDocument, InlineQuery
 from database.ia_filterdb import get_search_results
 from utils import get_size
@@ -23,7 +24,7 @@ async def inline_search(bot, query):
     string = query.query.strip()
     offset = int(query.offset or 0)
     
-    # अपडेटेड ia_filterdb मेथड के अनुसार फ़ाइलें प्राप्त करें (No Lang Parameter Overheads)
+    # अपडेटेड ia_filterdb मेथड के अनुसार फ़ाइलें प्राप्त करें
     files, next_offset, total = await get_search_results(string, offset=offset)
 
     for file in files:
