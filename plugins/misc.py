@@ -1,65 +1,59 @@
-from info import ADMINS
-from speedtest import Speedtest, ConfigRetrievalError
-from pyrogram import Client, filters, enums
-from utils import get_size
-from datetime import datetime
+import random
+from hydrogram import Client, filters, enums
+from info import PICS
+from utils import temp
 
+# ==========================================
+# 1. ADMIN ONLY - ID FETCHING ENGINE
+# ==========================================
 
-@Client.on_message(filters.command('id'))
+@Client.on_message(filters.command('id') & filters.incoming)
 async def showid(client, message):
+    """यूज़र आईडी, ग्रुप आईडी या फॉरवर्ड किए गए चैनल/मैसेज की आईडी निकालने का कमांड"""
     chat_type = message.chat.type
-    replied_to_msg = bool(message.reply_to_message)
-    if replied_to_msg:
-        return await message.reply_text(f"""The forwarded message channel {replied_to_msg.chat.title}'s id is, <code>{replied_to_msg.chat.id}</code>.""")
+    
+    # 1. यदि किसी मैसेज पर रिप्लाई करके आईडी मांगी गई हो
+    if message.reply_to_message:
+        reply = message.reply_to_message
+        if reply.forward_from_chat:
+            return await message.reply_text(
+                f"📣 <b>फॉरवर्डेड चैनल/चैट विवरण:</b>\n"
+                f"🔹 नाम: <b>{reply.forward_from_chat.title}</b>\n"
+                f"🆔 आईडी (ID): <code>{reply.forward_from_chat.id}</code>"
+            )
+        elif reply.from_user:
+            return await message.reply_text(
+                f"🦹 <b>यूज़र विवरण:</b>\n"
+                f"🔹 नाम: {reply.from_user.mention}\n"
+                f"🆔 यूज़र आईडी: <code>{reply.from_user.id}</code>"
+            )
+
+    # 2. सामान्य रूप से चैट टाइप के आधार पर आईडी देना
     if chat_type == enums.ChatType.PRIVATE:
-        await message.reply_text(f'🦹 User ID: <code>{message.from_user.id}</code>')
+        await message.reply_text(f'<b>🦹 आपकी टेलीग्राम आईडी: <code>{message.from_user.id}</code>\n💬 इस प्राइवेट चैट की आईडी: <code>{message.chat.id}</code></b>')
 
     elif chat_type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
-        await message.reply_text(f'👫 Group ID: <code>{message.chat.id}</code>')
+        await message.reply_text(f'<b>👫 इस ग्रुप की आईडी (Group ID): <code>{message.chat.id}</code></b>')
 
     elif chat_type == enums.ChatType.CHANNEL:
-        await message.reply_text(f'📣 Channel ID: <code>{message.chat.id}</code>')
+        await message.reply_text(f'<b>📣 इस चैनल की आईडी (Channel ID): <code>{message.chat.id}</code></b>')
 
 
-@Client.on_message(filters.command('speedtest') & filters.user(ADMINS))
-async def speedtest(client, message):
-    #from - https://github.com/weebzone/WZML-X/blob/master/bot/modules/speedtest.py
-    msg = await message.reply_text("Initiating Speedtest...")
-    try:
-        speed = Speedtest()
-    except ConfigRetrievalError:
-        await msg.edit("Can't connect to Server at the Moment, Try Again Later !")
-        return
-    speed.get_best_server()
-    speed.download()
-    speed.upload()
-    speed.results.share()
-    result = speed.results.dict()
-    photo = result['share']
-    text = f'''
-➲ <b>SPEEDTEST INFO</b>
-┠ <b>Upload:</b> <code>{get_size(result['upload'])}/s</code>
-┠ <b>Download:</b>  <code>{get_size(result['download'])}/s</code>
-┠ <b>Ping:</b> <code>{result['ping']} ms</code>
-┠ <b>Time:</b> <code>{datetime.strptime(result['timestamp'], "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d %H:%M:%S")}</code>
-┠ <b>Data Sent:</b> <code>{get_size(int(result['bytes_sent']))}</code>
-┖ <b>Data Received:</b> <code>{get_size(int(result['bytes_received']))}</code>
+# ==========================================
+# 2. CHAT MEMBER UPDATED HANDLER (No Links)
+# ==========================================
 
-➲ <b>SPEEDTEST SERVER</b>
-┠ <b>Name:</b> <code>{result['server']['name']}</code>
-┠ <b>Country:</b> <code>{result['server']['country']}, {result['server']['cc']}</code>
-┠ <b>Sponsor:</b> <code>{result['server']['sponsor']}</code>
-┠ <b>Latency:</b> <code>{result['server']['latency']}</code>
-┠ <b>Latitude:</b> <code>{result['server']['lat']}</code>
-┖ <b>Longitude:</b> <code>{result['server']['lon']}</code>
-
-➲ <b>CLIENT DETAILS</b>
-┠ <b>IP Address:</b> <code>{result['client']['ip']}</code>
-┠ <b>Latitude:</b> <code>{result['client']['lat']}</code>
-┠ <b>Longitude:</b> <code>{result['client']['lon']}</code>
-┠ <b>Country:</b> <code>{result['client']['country']}</code>
-┠ <b>ISP:</b> <code>{result['client']['isp']}</code>
-┖ <b>ISP Rating:</b> <code>{result['client']['isprating']}</code>
-'''
-    await message.reply_photo(photo=photo, caption=text)
-    await msg.delete()
+@Client.on_chat_member_updated(filters.group)
+async def welcome(bot, message):
+    """ग्रुप में बॉट के ऐड होने पर क्लीन वेलकम मैसेज भेजना (No Links)"""
+    if message.new_chat_member and not message.old_chat_member:
+        # यदि बॉट खुद किसी ग्रुप में ऐड हुआ है
+        if message.new_chat_member.user.id == temp.ME:
+            user = message.from_user.mention if message.from_user else "Dear Owner/Admin"
+            
+            # बिना किसी बाहरी लिंक्स या बटन्स के सिर्फ एक साधारण फोटो अलर्ट
+            await bot.send_photo(
+                chat_id=message.chat.id, 
+                photo=random.choice(PICS), 
+                caption=f"👋 Hello {user},\n\nमुझे <b>'{message.chat.title}'</b> ग्रुप में जोड़ने के लिए धन्यवाद! कृपया मुझे एडमिन (Admin) बना दें ताकि मैं फाइल्स को सही ढंग से फ़िल्टर कर सकूं। 😘"
+            )
