@@ -19,16 +19,16 @@ from hydrogram.errors import AuthBytesInvalid
 from hydrogram.file_id import FileId, FileType
 from hydrogram.types import Message
 
+# Dynamically importing variables directly from your info.py config
 from info import URL, BIN_CHANNEL, ADMINS, MAX_WEB_RESULTS, MAX_THUMB_CACHE
-from utils import temp, get_size, is_rate_limited
-# Synced perfectly with your single Media collection and existing search function
+from utils import temp, get_size
 from database.ia_filterdb import Media, get_search_results, get_file_details
 
 logger = logging.getLogger(__name__)
 routes = web.RouteTableDef()
 
 # ─────────────────────────────────────────────────────────
-# 📸 ULTRA-FAST LRU THUMBNAIL CORES (Single Media Collection)
+# 📸 TRUE LRU THUMBNAIL CACHE ENGINE (Uses MAX_THUMB_CACHE)
 # ─────────────────────────────────────────────────────────
 MAX_CACHE = MAX_THUMB_CACHE
 thumb_semaphore = asyncio.Semaphore(15)
@@ -56,7 +56,7 @@ async def _get_or_fetch_thumb(fid, is_retry=False):
                 if len(thumb_cache) >= MAX_CACHE:
                     thumb_cache.popitem(last=False)
                 
-                # Directly querying your existing single Media collection
+                # Querying your native single Media collection
                 existing = await Media.find_one({"_id": fid}, {"thumb_url": 1})
                 if existing and existing.get("thumb_url", "").startswith("TG_ID:"):
                     try:
@@ -67,7 +67,7 @@ async def _get_or_fetch_thumb(fid, is_retry=False):
                             return img_bytes
                     except Exception: pass
 
-                # Fallback: Forward to BIN_CHANNEL on-the-fly to extract fresh references
+                # Self-healing on-the-fly thumbnail auto-refresher gateway
                 for _ in range(3):
                     try:
                         msg = await temp.BOT.send_cached_media(chat_id=BIN_CHANNEL, file_id=fid)
@@ -80,7 +80,6 @@ async def _get_or_fetch_thumb(fid, is_retry=False):
                             if file_data:
                                 img_bytes = file_data.getvalue()
                                 thumb_cache[cache_key] = img_bytes
-                                # Overwriting the single collection document with new valid TG ID
                                 await Media.update_one({"_id": fid}, {"$set": {"thumb_url": f"TG_ID:{t_id}"}})
                                 return img_bytes
                         else:
@@ -138,7 +137,7 @@ class TGCustomYield:
                 current_part += 1
 
 # ─────────────────────────────────────────────────────────
-# 🔒 SIMPLE AUTHENTICATION (Cookies Based Session)
+# 🔒 COOKIE SESSIONS GATEWAY
 # ─────────────────────────────────────────────────────────
 async def get_auth(req):
     s_user = req.cookies.get("user_session")
@@ -148,10 +147,10 @@ async def get_auth(req):
     return None, None
 
 # ─────────────────────────────────────────────────────────
-# 🎨 WEB VIEW GENERATOR MATRICES
+# 🎨 DYNAMIC VIEW WEB ASSET PORTALS
 # ─────────────────────────────────────────────────────────
-CSS_ASSETS = """
-*{box-sizing:border-box;margin:0;padding:0}:root{--bg:#0a0a0c;--bg2:#111116;--bg3:#1d1d26;--accent:#e50914;--text:#ffffff;--muted:#a0a0b0;--border:#262636;--card:#14141f}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px}.topbar{background:var(--bg2);padding:15px 4%;display:flex;align-items:center;justify-content:between;border-bottom:1px solid var(--border);margin-bottom:20px;border-radius:8px}.logo{font-size:18px;font-weight:900;color:var(--accent);text-decoration:none}.search-zone{display:flex;gap:10px;margin-bottom:25px}.search-wrap{flex:1;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:0 15px;display:flex;align-items:center;height:44px}.search-input{width:100%;background:0 0;border:none;outline:none;color:var(--text);font-size:14px;font-weight:600}.search-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:0 24px;height:44px;font-size:14px;font-weight:700;cursor:pointer}.res-grid{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:600px){.res-grid{grid-template-columns:repeat(3,1fr);gap:16px}}.file-card{background:var(--card);border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform .2s}.file-card:hover{transform:translateY(-4px);border-color:var(--accent)}.poster-box{position:relative;padding-top:56.25%;background:#000;overflow:hidden}.fc-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s}.fc-poster.loaded{opacity:1}.fc-body{padding:12px}.fc-name{font-size:13px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.poster-top{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:5px;z-index:2}.type-chip,.size-chip{background:rgba(0,0,0,.7);padding:3px 6px;border-radius:4px;font-size:9px;font-weight:800;border:1px solid rgba(255,255,255,.1)}.pagination{display:none;justify-content:center;align-items:center;gap:15px;margin-top:20px}.pg-btn{background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:8px 18px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+CSS_STACK = """
+*{box-sizing:border-box;margin:0;padding:0}:root{--bg:#0a0a0c;--bg2:#111116;--bg3:#1d1d26;--accent:#e50914;--text:#ffffff;--muted:#a0a0b0;--border:#262636;--card:#14141f}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:20px}.topbar{background:var(--bg2);padding:15px 4%;display:flex;align-items:center;justify-content:between;border-bottom:1px solid var(--border);margin-bottom:20px;border-radius:8px}.logo{font-size:18px;font-weight:900;color:var(--accent);text-decoration:none}.search-zone{display:flex;gap:10px;margin-bottom:25px}.search-wrap{flex:1;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:0 15px;display:flex;align-items:center;height:44px}.search-input{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:14px;font-weight:600}.search-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:0 24px;height:44px;font-size:14px;font-weight:700;cursor:pointer}.res-grid{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:600px){.res-grid{grid-template-columns:repeat(3,1fr);gap:16px}}.file-card{background:var(--card);border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform .2s}.file-card:hover{transform:translateY(-4px);border-color:var(--accent)}.poster-box{position:relative;padding-top:56.25%;background:#000;overflow:hidden}.fc-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s}.fc-poster.loaded{opacity:1}.fc-body{padding:12px}.fc-name{font-size:13px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.poster-top{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:5px;z-index:2}.type-chip,.size-chip{background:rgba(0,0,0,.7);padding:3px 6px;border-radius:4px;font-size:9px;font-weight:800;border:1px solid rgba(255,255,255,.1)}.pagination{display:none;justify-content:center;align-items:center;gap:15px;margin-top:20px}.pg-btn{background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:8px 18px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}.pg-btn:disabled{opacity:.4;cursor:not-allowed}
 """
 
 @routes.get("/dashboard")
@@ -161,7 +160,7 @@ async def dashboard_portal(req):
     if not role and req.path == "/dashboard": return web.HTTPFound('/login')
     
     body = f"""
-    <style>{CSS_ASSETS}</style>
+    <style>{CSS_STACK}</style>
     <div class="topbar"><a class="logo" href="#">⚡ FAST FINDER WEB</a></div>
     <div class="main">
         <div class="search-zone">
@@ -177,10 +176,11 @@ async def dashboard_portal(req):
     </div>
     <script>
     var nextOff="",curOff=0,curPage=1;
+    var LIMIT_VAL = {MAX_WEB_RESULTS};
     async function doSearch(o){{
         var q=document.getElementById("q").value.trim(); if(!q) return;
         curOff=o; if(o===0) curPage=1;
-        var grid=document.getElementById("results"); grid.innerHTML="<div style='grid-column:1/-1;text-align:center;padding:40px;'>Searching Engine Network...</div>";
+        var grid=document.getElementById("results"); grid.innerHTML="<div style='grid-column:1/-1;text-align:center;padding:40px;'>Searching Database...</div>";
         try{{
             var r=await fetch("/api/search?q="+encodeURIComponent(q)+"&offset="+o),d=await r.json();
             var h="";
@@ -193,8 +193,8 @@ async def dashboard_portal(req):
             document.getElementById("pgInfo").textContent='Page '+curPage;
         }}catch(e){{grid.innerHTML="Search connection timed out.";}}
     }}
-    function next Hawking(){{if(nextOff){{curPage++;doSearch(nextOff);}}}}
-    function prev(){{if(curPage>1){{curPage--;doSearch(Math.max(0,curOff-20));}}}}
+    function next(){{if(nextOff){{curPage++;doSearch(nextOff);}}}}
+    function prev(){{if(curPage>1){{curPage--;doSearch(Math.max(0,curOff-LIMIT_VAL));}}}}
     </script>
     """
     return web.Response(text=body, content_type='text/html', charset='utf-8')
@@ -206,16 +206,14 @@ async def api_search(req):
     try: off = max(0, int(off))
     except: off = 0
 
-    # Calling your existing native search function with object mapping
     files, next_offset, total_results = await get_search_results(q, offset=off)
     
     results_list = []
     for d in files:
-        # Resolving dynamically whether it's a dot-notifier class object or dict entry
-        fid = getattr(d, "file_id", getattr(d, "id", None))
-        name = getattr(d, "file_name", "Unknown File")
-        size = get_size(getattr(d, "file_size", 0))
-        f_type = getattr(d, "file_type", "video").upper()
+        fid = getattr(d, "file_id", getattr(d, "id", d.get("_id") if isinstance(d, dict) else None))
+        name = getattr(d, "file_name", d.get("file_name", "Unknown File") if isinstance(d, dict) else "Unknown File")
+        size = get_size(getattr(d, "file_size", d.get("file_size", 0) if isinstance(d, dict) else 0))
+        f_type = getattr(d, "file_type", d.get("file_type", "video") if isinstance(d, dict) else "video").upper()
         
         results_list.append({
             "file_id": fid, "name": name, "size": size, "type": f_type,
