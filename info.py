@@ -16,7 +16,7 @@ def is_valid_ip(ip):
     ip_pattern = r'\b(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'
     return re.match(ip_pattern, ip) is not None
 
-# बॉट क्रेडेंशियल्स
+# Bot Credentials
 API_ID = environ.get('API_ID', '')
 if len(API_ID) == 0:
     print('Error - API_ID is missing, exiting now')
@@ -37,7 +37,7 @@ if len(BOT_TOKEN) == 0:
 PORT = int(environ.get('PORT', '80'))
 PICS = (environ.get('PICS', 'https://telegra.ph/file/58fef5cb458d5b29b0186.jpg')).split()
 
-# केवल ऑथराइज्ड एडमिंस की लिस्ट
+# Authorized Admins List
 ADMINS = environ.get('ADMINS', '')
 if len(ADMINS) == 0:
     print('Error - ADMINS is missing, exiting now')
@@ -45,7 +45,7 @@ if len(ADMINS) == 0:
 else:
     ADMINS = [int(admins) for admins in ADMINS.split()]
 
-# इंडेक्स चैनल्स और लॉग चैनल
+# Index Channels and Log Channel
 INDEX_CHANNELS = [int(index_channels) if index_channels.startswith("-") else index_channels for index_channels in environ.get('INDEX_CHANNELS', '').split()]
 LOG_CHANNEL = environ.get('LOG_CHANNEL', '')
 if len(LOG_CHANNEL) == 0:
@@ -54,7 +54,7 @@ if len(LOG_CHANNEL) == 0:
 else:
     LOG_CHANNEL = int(LOG_CHANNEL)
 
-# मोंगोडीबी (MongoDB) कॉन्फ़िगरेशन
+# MongoDB Configuration
 DATABASE_URL = environ.get('DATABASE_URL', "")
 if len(DATABASE_URL) == 0:
     print('Error - DATABASE_URL is missing, exiting now')
@@ -62,16 +62,18 @@ if len(DATABASE_URL) == 0:
 DATABASE_NAME = environ.get('DATABASE_NAME', "Cluster0")
 COLLECTION_NAME = environ.get('COLLECTION_NAME', 'Files')
 
-# फ़ाइल कैप्शन (बाकी सभी बाहरी लिंक्स डिलीट)
+# File Caption & Web Limits
 FILE_CAPTION = environ.get("FILE_CAPTION", script.FILE_CAPTION)
 MAX_BTN = int(environ.get('MAX_BTN', 12))
 CACHE_TIME = int(environ.get('CACHE_TIME', 300))
+MAX_WEB_RESULTS = int(environ.get('MAX_WEB_RESULTS', 20))
+MAX_THUMB_CACHE = int(environ.get('MAX_THUMB_CACHE', 500))
 
-# बुनियादी सेटिंग्स
+# Basic Settings
 IS_PM_SEARCH = is_enabled('IS_PM_SEARCH', True)
 PROTECT_CONTENT = is_enabled('PROTECT_CONTENT', False)
 
-# वीडियो स्ट्रीमिंग इंजन सेटिंग्स
+# Video Streaming Engine Settings
 IS_STREAM = is_enabled('IS_STREAM', True)
 BIN_CHANNEL = environ.get("BIN_CHANNEL", "")
 if len(BIN_CHANNEL) == 0:
