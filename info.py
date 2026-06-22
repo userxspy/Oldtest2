@@ -66,8 +66,6 @@ COLLECTION_NAME = environ.get('COLLECTION_NAME', 'Files')
 FILE_CAPTION = environ.get("FILE_CAPTION", script.FILE_CAPTION)
 MAX_BTN = int(environ.get('MAX_BTN', 12))
 CACHE_TIME = int(environ.get('CACHE_TIME', 300))
-MAX_WEB_RESULTS = int(environ.get('MAX_WEB_RESULTS', 20))
-MAX_THUMB_CACHE = int(environ.get('MAX_THUMB_CACHE', 500))
 
 # Basic Settings
 IS_PM_SEARCH = is_enabled('IS_PM_SEARCH', True)
